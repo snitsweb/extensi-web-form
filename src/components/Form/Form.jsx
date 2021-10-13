@@ -58,13 +58,10 @@ const Form = (props) => {
     }
 
     const getEmailValidatorAnswer = (email) => {
-        const isAnchor = email.includes("#")
-        if(isAnchor){
-            setEmailCheckDone(true)
-            return false
-        }
 
-        const res = axios.get(`/api/email-validator.php?email=${email}`).then(({data}) => {
+        const emailURI = encodeURIComponent(email)
+
+        const res = axios.get(`/api/email-validator.php?email=${emailURI}`).then(({data}) => {
             setEmailCheckDone(true)
             return data.validation_status
         })
