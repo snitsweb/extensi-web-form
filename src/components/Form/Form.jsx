@@ -11,6 +11,9 @@ const day = String(today.getDate()).padStart(2, '0');
 const month = String(today.getMonth() + 1).padStart(2, '0');
 const year = today.getFullYear();
 
+//axis request token
+let ajaxRequest = null;
+
 const Form = (props) => {
     //email states
     const [emailValue, setEmailValue] = React.useState("")
@@ -40,14 +43,14 @@ const Form = (props) => {
         context === 'surname' && setSurnameValue(e.target.value)
 
         if (e.target.value.length >= 3) {
-            if(context === 'name'){
+            if (context === 'name') {
                 setIsNameValid(true)
                 checkButtonReady(isDateValid, isSurnameValid, true, isEmailValid)
             } else if (context === 'surname') {
                 setIsSurnameValid(true)
                 checkButtonReady(isDateValid, true, isNameValid, isEmailValid)
             }
-        } else if(e.target.value.length === 0 && context === "surname"){
+        } else if (e.target.value.length === 0 && context === "surname") {
             setIsSurnameValid(true)
             checkButtonReady(isDateValid, true, isNameValid, isEmailValid)
         } else {
@@ -61,9 +64,24 @@ const Form = (props) => {
 
         const emailURI = encodeURIComponent(email)
 
-        const res = axios.get(`/api/email-validator.php?email=${emailURI}`).then(({data}) => {
+        if (ajaxRequest) {
+            ajaxRequest.cancel();
+        }
+
+        ajaxRequest = axios.CancelToken.source();
+
+        const res = axios.get(`/api/email-validator.php?email=${emailURI}`,
+            {
+                cancelToken: ajaxRequest.token
+            }).then(({data}) => {
             setEmailCheckDone(true)
             return data.validation_status
+        }).catch((err)=> {
+            if (axios.isCancel(err)) {
+                console.log('Previous request canceled, new request is send', err.message);
+            } else {
+                console.log(err)
+            }
         })
         return res
     }
@@ -98,16 +116,21 @@ const Form = (props) => {
     }
 
     const checkButtonReady = (isDateValid, isSurnameValid, isNameValid, isEmailValid) => {
-        if(isDateValid && isSurnameValid && isNameValid && isEmailValid){
+        if (isDateValid && isSurnameValid && isNameValid && isEmailValid) {
             setIsButtonAvailable(true)
         } else {
             setIsButtonAvailable(false)
         }
-        console.log(isDateValid,  isSurnameValid , isNameValid , isEmailValid)
     }
 
     const onButtonClick = () => {
-        alert(JSON.stringify({name: nameValue, surname: surnameValue, date: dateValue, email: emailValue, gender: genderValue}))
+        alert(JSON.stringify({
+            name: nameValue,
+            surname: surnameValue,
+            date: dateValue,
+            email: emailValue,
+            gender: genderValue
+        }))
     }
 
     return (
